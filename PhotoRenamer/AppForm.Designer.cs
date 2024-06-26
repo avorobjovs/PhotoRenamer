@@ -59,6 +59,7 @@
             this.tbFolder.Name = "tbFolder";
             this.tbFolder.Size = new System.Drawing.Size(720, 20);
             this.tbFolder.TabIndex = 0;
+            this.tbFolder.TextChanged += new System.EventHandler(this.tbFolder_TextChanged);
             // 
             // lblFolder
             // 
@@ -133,6 +134,7 @@
             this.tbCustomPattern.Name = "tbCustomPattern";
             this.tbCustomPattern.Size = new System.Drawing.Size(327, 20);
             this.tbCustomPattern.TabIndex = 9;
+            this.tbCustomPattern.TextChanged += new System.EventHandler(this.tbCustomPattern_TextChanged);
             // 
             // tbCustomName
             // 
@@ -140,6 +142,7 @@
             this.tbCustomName.Name = "tbCustomName";
             this.tbCustomName.Size = new System.Drawing.Size(327, 20);
             this.tbCustomName.TabIndex = 10;
+            this.tbCustomName.TextChanged += new System.EventHandler(this.tbCustomName_TextChanged);
             // 
             // btnCustomSave
             // 
@@ -150,6 +153,7 @@
             this.btnCustomSave.TabIndex = 11;
             this.btnCustomSave.Text = "Save";
             this.btnCustomSave.UseVisualStyleBackColor = true;
+            this.btnCustomSave.Click += new System.EventHandler(this.btnCustomSave_Click);
             // 
             // panel2
             // 
@@ -183,6 +187,7 @@
             this.btnTest.TabIndex = 13;
             this.btnTest.Text = "Test";
             this.btnTest.UseVisualStyleBackColor = true;
+            this.btnTest.Click += new System.EventHandler(this.btnTest_Click);
             // 
             // btnRename
             // 
@@ -193,6 +198,7 @@
             this.btnRename.TabIndex = 14;
             this.btnRename.Text = "Rename";
             this.btnRename.UseVisualStyleBackColor = true;
+            this.btnRename.Click += new System.EventHandler(this.btnRename_Click);
             // 
             // dataGridResult
             // 
