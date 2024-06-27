@@ -304,8 +304,10 @@ namespace PhotoRenamer
             List<string> folders = new List<string>() { tbFolder.Text };
             if (cbApplyToSubfolders.Checked)
             {
-                var subfolders = Directory.GetDirectories(tbFolder.Text, "*", SearchOption.AllDirectories);
-                folders.AddRange(subfolders);
+                var folderEntries = Directory.GetDirectories(tbFolder.Text, "*", SearchOption.AllDirectories);
+                var subfolderList = folderEntries.ToList();
+                subfolderList.Sort();
+                folders.AddRange(subfolderList);
             }
 
             var workingPatterns = selectedWorkingPattern.Split(';');
@@ -318,11 +320,16 @@ namespace PhotoRenamer
                 {
                     var searchPattern = workingPattern.Replace("YYYY", "????").Replace("MM", "??").Replace("DD", "??")
                         .Replace("hh", "??").Replace("mm", "??").Replace("ss", "??") + ".*";
-                    string[] fileEntries = Directory.GetFiles(folder, searchPattern);
-                    folderFiles.AddRange(fileEntries);
+                    var fileEntries = Directory.GetFiles(folder, searchPattern);
+                    var fileList = fileEntries.ToList();
+                    fileList.Sort();
+                    folderFiles.AddRange(fileList);
                 }
 
-                searchResult.Add(folder, folderFiles);
+                if (folderFiles.Count > 0)
+                {
+                    searchResult.Add(folder, folderFiles);
+                }
             }
 
             return searchResult;
