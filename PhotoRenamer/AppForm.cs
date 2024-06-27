@@ -1,15 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
-using System.DirectoryServices;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+using PhotoRenamer.Components;
 
 namespace PhotoRenamer
 {
@@ -280,6 +276,13 @@ namespace PhotoRenamer
             }
 
             var searchResult = GetSearchResult();
+            if (searchResult.Count == 0)
+            {
+                MessageBox.Show("No one file is found.", "Information");
+                return;
+            }
+
+            ProcessSearchResult(searchResult, false);
         }
 
         private void btnRename_Click(object sender, EventArgs e)
@@ -295,6 +298,15 @@ namespace PhotoRenamer
                 MessageBox.Show("Selected pattern format is not valid.", "Error");
                 return;
             }
+
+            var searchResult = GetSearchResult();
+            if (searchResult.Count == 0)
+            {
+                MessageBox.Show("No one file is found.", "Information");
+                return;
+            }
+
+            //ProcessSearchResult(searchResult, true);
         }
 
         private Dictionary<string, List<string>> GetSearchResult()
@@ -333,6 +345,34 @@ namespace PhotoRenamer
             }
 
             return searchResult;
+        }
+
+        private void ProcessSearchResult(Dictionary<string, List<string>> searchResult, bool saveRenaming)
+        {
+            dataGridResult.Rows.Clear();
+            var currentRowIndex = 0;
+
+            foreach (var item in searchResult)
+            {
+                DataGridViewRow newRowEx = new DataGridViewRow();
+                newRowEx.Cells.Add(new DataGridViewTextBoxCellEx());
+                newRowEx.Cells.Add(new DataGridViewTextBoxCellEx());
+                dataGridResult.Rows.Add(newRowEx);
+
+                var cellEx = (DataGridViewTextBoxCellEx)dataGridResult[0, currentRowIndex];
+                cellEx.ColumnSpan = 2;
+                cellEx.RowSpan = 1;
+                cellEx.Value = item.Key;
+                cellEx.Style.Font = new Font(dataGridResult.Font, FontStyle.Bold);
+                currentRowIndex++;
+
+                foreach (var sourceFileFullPath in item.Value)
+                {
+                    var sourceFileName = Path.GetFileName(sourceFileFullPath);
+                    dataGridResult.Rows.Add(new String[] { sourceFileName, "" });
+                    currentRowIndex++;
+                }
+            }
         }
     }
 }

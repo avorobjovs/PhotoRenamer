@@ -202,6 +202,10 @@
             // 
             // dataGridResult
             // 
+            this.dataGridResult.AllowUserToAddRows = false;
+            this.dataGridResult.AllowUserToDeleteRows = false;
+            this.dataGridResult.AllowUserToResizeColumns = false;
+            this.dataGridResult.AllowUserToResizeRows = false;
             this.dataGridResult.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
@@ -224,12 +228,16 @@
             this.columnBefore.HeaderText = "Before";
             this.columnBefore.Name = "columnBefore";
             this.columnBefore.ReadOnly = true;
+            this.columnBefore.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.columnBefore.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
             // 
             // columnAfter
             // 
             this.columnAfter.HeaderText = "After";
             this.columnAfter.Name = "columnAfter";
             this.columnAfter.ReadOnly = true;
+            this.columnAfter.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.columnAfter.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
             // 
             // AppForm
             // 
