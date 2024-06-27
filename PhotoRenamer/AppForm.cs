@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.DirectoryServices;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -156,21 +157,20 @@ namespace PhotoRenamer
             }
         }
 
-        private bool CheckCustomPatternFormat()
+        private bool CheckPatternFormat(string pattern)
         {
-            if (!string.IsNullOrEmpty(tbCustomPattern.Text) &&
-                tbCustomPattern.Text.Contains("YYYY") &&
-                tbCustomPattern.Text.Contains("MM") &&
-                tbCustomPattern.Text.Contains("DD") &&
-                tbCustomPattern.Text.Contains("hh") &&
-                tbCustomPattern.Text.Contains("mm") &&
-                tbCustomPattern.Text.Contains("ss"))
+            if (!string.IsNullOrEmpty(pattern) &&
+                pattern.Contains("YYYY") &&
+                pattern.Contains("MM") &&
+                pattern.Contains("DD") &&
+                pattern.Contains("hh") &&
+                pattern.Contains("mm") &&
+                pattern.Contains("ss"))
             {
                 return true;
             }
             else
             {
-                MessageBox.Show("Custom pattern format is not valid.", "Error");
                 return false; 
             }
         }
@@ -190,30 +190,38 @@ namespace PhotoRenamer
             }
             else
             {
-                MessageBox.Show("Custom pattern format already exists.", "Error");
                 return false;
             }
         }
 
         private void btnCustomSave_Click(object sender, EventArgs e)
         {
-            if (CheckCustomPatternFormat() && CheckCustomPatternDuplication())
+            if (!CheckPatternFormat(tbCustomPattern.Text))
             {
-                var newRow = dataTable.NewRow();
-                newRow["Pattern"] = tbCustomPattern.Text;
-                newRow["Name"] = tbCustomName.Text;
-                dataTable.Rows.InsertAt(newRow, dataTable.Rows.Count - 1);
-
-                WritePatterns();
-
-                tbCustomPattern.Text = null;
-                tbCustomName.Text = null;
-                btnCustomSave.Enabled = false;
-
-                cbPattern.SelectedIndex = cbPattern.Items.Count - 2;
-
-                EnableDisableCustom(false);
+                MessageBox.Show("Custom pattern format is not valid.", "Error");
+                return;
             }
+
+            if (!CheckCustomPatternDuplication())
+            {
+                MessageBox.Show("Custom pattern format already exists.", "Error");
+                return;
+            }
+
+            var newRow = dataTable.NewRow();
+            newRow["Pattern"] = tbCustomPattern.Text;
+            newRow["Name"] = tbCustomName.Text;
+            dataTable.Rows.InsertAt(newRow, dataTable.Rows.Count - 1);
+
+            WritePatterns();
+
+            tbCustomPattern.Text = null;
+            tbCustomName.Text = null;
+            btnCustomSave.Enabled = false;
+
+            cbPattern.SelectedIndex = cbPattern.Items.Count - 2;
+
+            EnableDisableCustom(false);
         }
 
         private void CheckTestRenameButtons()
@@ -244,16 +252,80 @@ namespace PhotoRenamer
 
         }
 
+        private bool CheckFolder()
+        {
+            if (!string.IsNullOrEmpty(tbFolder.Text) &&
+                Directory.Exists(tbFolder.Text))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
         private void btnTest_Click(object sender, EventArgs e)
         {
+            if (!CheckFolder())
+            {
+                MessageBox.Show("Selected folder doesn't exist.", "Error");
+                return;
+            }
 
+            if (!CheckPatternFormat(selectedWorkingPattern))
+            {
+                MessageBox.Show("Selected pattern format is not valid.", "Error");
+                return;
+            }
+
+            var searchResult = GetSearchResult();
         }
 
         private void btnRename_Click(object sender, EventArgs e)
         {
+            if (!CheckFolder())
+            {
+                MessageBox.Show("Selected folder doesn't exist.", "Error");
+                return;
+            }
 
+            if (!CheckPatternFormat(selectedWorkingPattern))
+            {
+                MessageBox.Show("Selected pattern format is not valid.", "Error");
+                return;
+            }
         }
 
-        
+        private Dictionary<string, List<string>> GetSearchResult()
+        {
+            var searchResult = new Dictionary<string, List<string>>();
+
+            List<string> folders = new List<string>() { tbFolder.Text };
+            if (cbApplyToSubfolders.Checked)
+            {
+                var subfolders = Directory.GetDirectories(tbFolder.Text, "*", SearchOption.AllDirectories);
+                folders.AddRange(subfolders);
+            }
+
+            var workingPatterns = selectedWorkingPattern.Split(';');
+
+            foreach (var folder in folders)
+            {
+                List<string> folderFiles = new List<string>();
+
+                foreach (var workingPattern in workingPatterns)
+                {
+                    var searchPattern = workingPattern.Replace("YYYY", "????").Replace("MM", "??").Replace("DD", "??")
+                        .Replace("hh", "??").Replace("mm", "??").Replace("ss", "??") + ".*";
+                    string[] fileEntries = Directory.GetFiles(folder, searchPattern);
+                    folderFiles.AddRange(fileEntries);
+                }
+
+                searchResult.Add(folder, folderFiles);
+            }
+
+            return searchResult;
+        }
     }
 }
