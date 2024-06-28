@@ -17,6 +17,8 @@ namespace PhotoRenamer
         private string selectedPatternName;
         private string selectedWorkingPattern;
 
+        public class PhotosSearchResult : Dictionary<string, List<KeyValuePair<string, string>>> { }
+
         public AppForm()
         {
             //string strExeFilePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
@@ -263,6 +265,8 @@ namespace PhotoRenamer
 
         private void btnTest_Click(object sender, EventArgs e)
         {
+            dataGridResult.Rows.Clear();
+
             if (!CheckFolder())
             {
                 MessageBox.Show("Selected folder doesn't exist.", "Error");
@@ -287,6 +291,8 @@ namespace PhotoRenamer
 
         private void btnRename_Click(object sender, EventArgs e)
         {
+            dataGridResult.Rows.Clear();
+
             if (!CheckFolder())
             {
                 MessageBox.Show("Selected folder doesn't exist.", "Error");
@@ -306,12 +312,12 @@ namespace PhotoRenamer
                 return;
             }
 
-            //ProcessSearchResult(searchResult, true);
+            ProcessSearchResult(searchResult, true);
         }
 
-        private Dictionary<string, List<string>> GetSearchResult()
+        private PhotosSearchResult GetSearchResult()
         {
-            var searchResult = new Dictionary<string, List<string>>();
+            var searchResult = new PhotosSearchResult();
 
             List<string> folders = new List<string>() { tbFolder.Text };
             if (cbApplyToSubfolders.Checked)
@@ -326,7 +332,7 @@ namespace PhotoRenamer
 
             foreach (var folder in folders)
             {
-                List<string> folderFiles = new List<string>();
+                List<KeyValuePair<string, string>> folderFiles = new List<KeyValuePair<string, string>>();
 
                 foreach (var workingPattern in workingPatterns)
                 {
@@ -335,7 +341,12 @@ namespace PhotoRenamer
                     var fileEntries = Directory.GetFiles(folder, searchPattern);
                     var fileList = fileEntries.ToList();
                     fileList.Sort();
-                    folderFiles.AddRange(fileList);
+
+                    foreach (var sourceFileFullPath in fileList)
+                    {
+                        var sourceFileName = Path.GetFileName(sourceFileFullPath);
+                        folderFiles.Add(new KeyValuePair<string, string>(workingPattern, sourceFileName));
+                    }
                 }
 
                 if (folderFiles.Count > 0)
@@ -347,13 +358,15 @@ namespace PhotoRenamer
             return searchResult;
         }
 
-        private void ProcessSearchResult(Dictionary<string, List<string>> searchResult, bool saveRenaming)
+        private void ProcessSearchResult(PhotosSearchResult searchResult, bool saveRenaming)
         {
             dataGridResult.Rows.Clear();
             var currentRowIndex = 0;
 
-            foreach (var item in searchResult)
+            foreach (var dictionaryItem in searchResult)
             {
+                var folder = dictionaryItem.Key;
+
                 DataGridViewRow newRowEx = new DataGridViewRow();
                 newRowEx.Cells.Add(new DataGridViewTextBoxCellEx());
                 newRowEx.Cells.Add(new DataGridViewTextBoxCellEx());
@@ -362,17 +375,62 @@ namespace PhotoRenamer
                 var cellEx = (DataGridViewTextBoxCellEx)dataGridResult[0, currentRowIndex];
                 cellEx.ColumnSpan = 2;
                 cellEx.RowSpan = 1;
-                cellEx.Value = item.Key;
+                cellEx.Value = folder;
                 cellEx.Style.Font = new Font(dataGridResult.Font, FontStyle.Bold);
                 currentRowIndex++;
 
-                foreach (var sourceFileFullPath in item.Value)
+                foreach (var keyValueItem in dictionaryItem.Value)
                 {
-                    var sourceFileName = Path.GetFileName(sourceFileFullPath);
-                    dataGridResult.Rows.Add(new String[] { sourceFileName, "" });
+                    var workingPattern = keyValueItem.Key;
+                    var sourceFileName = keyValueItem.Value;
+                    var destFileName = GetNewFileName(workingPattern, sourceFileName);
+
+                    dataGridResult.Rows.Add(new String[] { sourceFileName, destFileName });
                     currentRowIndex++;
+
+                    if (saveRenaming)
+                    {
+                        var sourceFilePath = Path.Combine(folder, sourceFileName);
+                        var destFilePath = Path.Combine(folder, destFileName);
+
+                        if (File.Exists(destFilePath))
+                        {
+                            MessageBox.Show($"File \"{destFilePath}\" already exists.", "Error");
+                        }
+                        else
+                        {
+                            try
+                            {
+                                File.Move(sourceFilePath, destFilePath);
+                            }
+                            catch (Exception ex) 
+                            {
+                                MessageBox.Show(ex.Message, "Error");
+                            }
+                        }
+                    }
                 }
             }
+        }
+
+        private string GetNewFileName(string workingPattern, string sourceFileName)
+        {
+            var idxYear = workingPattern.IndexOf("YYYY");
+            var idxMonth = workingPattern.IndexOf("MM");
+            var idxDay = workingPattern.IndexOf("DD");
+            var idxHour = workingPattern.IndexOf("hh");
+            var idxMin = workingPattern.IndexOf("mm");
+            var idxSec = workingPattern.IndexOf("ss");
+            var fileExt = Path.GetExtension(sourceFileName);
+
+            var destFileName = sourceFileName.Substring(idxYear, 4) + "-" +
+                sourceFileName.Substring(idxMonth, 2) + "-" +
+                sourceFileName.Substring(idxDay, 2) + " " +
+                sourceFileName.Substring(idxHour, 2) + "." +
+                sourceFileName.Substring(idxMin, 2) + "." +
+                sourceFileName.Substring(idxSec, 2) +
+                fileExt;
+            return destFileName;
         }
     }
 }
